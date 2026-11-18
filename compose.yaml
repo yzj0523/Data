@@ -1,0 +1,30 @@
+services:
+  backend:
+    build: ./backend
+    env_file:
+      - path: ./backend/.env
+        required: false
+    environment:
+      AI_ENVIRONMENT: production
+      AI_HOST: 0.0.0.0
+      AI_PORT: '8000'
+      AI_DATABASE_PATH: /data/ai_query.sqlite3
+    volumes:
+      - ai-query-data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=2).close()"]
+      interval: 10s
+      timeout: 4s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+  frontend:
+    build: ./frontend
+    ports:
+      - '127.0.0.1:8080:80'
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+volumes:
+  ai-query-data:
